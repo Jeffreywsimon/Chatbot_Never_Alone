@@ -1,13 +1,15 @@
 {
-  "name": "JSON_Chatbot",
+  "name": "json_chatbot",
   "version": "1.0.0",
-  "description": "A webhook that transforms Chatbot.com data and sends it to CallTrackingMetrics.",
+  "description": "A webhook that handles Chatbot.com data.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "engines": {
+    "node": "16.x"
+  },
   "dependencies": {
-    "express": "^4.17.1",
-    "axios": "^0.21.1"
+    "express": "^4.17.1"
   }
 }
