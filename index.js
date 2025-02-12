@@ -1,42 +1,18 @@
 const express = require('express');
-const axios = require('axios');
 const app = express();
 
-app.use(express.json());  // Parse incoming JSON payloads
+// Middleware to parse incoming JSON payloads
+app.use(express.json());
 
-app.post('/webhook', async (req, res) => {
-  try {
-    console.log('Received webhook:', req.body);
+app.post('/webhook', (req, res) => {
+  console.log('--- Incoming Webhook from Chatbot.com ---');
+  console.log(JSON.stringify(req.body, null, 2)); // Log the full JSON payload in a readable format
 
-    // Transform Chatbot.com data into the format expected by CTM
-    const transformedData = {
-      type: "chat",
-      customer_name: req.body.name,
-      custom_fields: {
-        birthdate: req.body.birthdate,
-        insurance_id: req.body.insurance_id
-      },
-      message: req.body.message
-    };
-
-    // Send the transformed data to CTM's API
-    const response = await axios.post(
-      'https://api.calltrackingmetrics.com/api/v1/accounts/YOUR_ACCOUNT_ID/activity',
-      transformedData,
-      {
-        headers: {
-          Authorization: `Bearer YOUR_CTM_API_KEY`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    console.log('Data forwarded to CTM:', response.data);
-    res.status(200).send('Data successfully forwarded to CTM');
-  } catch (error) {
-    console.error('Error forwarding to CTM:', error.response ? error.response.data : error.message);
-    res.status(500).send('Error forwarding to CTM');
-  }
+  // Send a response back to acknowledge the webhook
+  res.status(200).send({
+    message: 'Webhook received successfully',
+    receivedData: req.body
+  });
 });
 
 const PORT = process.env.PORT || 3000;
