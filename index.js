@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 
+console.log('the site is up")
+
 app.use(express.json());
 
 // Handle GET requests for webhook validation
