@@ -6,7 +6,7 @@ console.log('the site is up")
 app.use(express.json());
 
 // Handle GET requests for webhook validation
-app.get('/havenhealthchatbot', (req, res) => {
+app.get('/', (req, res) => {
   const challenge = req.query.challenge;
   if (challenge) {
     console.log(`Responding with challenge: ${challenge}`);
