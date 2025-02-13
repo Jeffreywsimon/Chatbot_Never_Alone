@@ -18,8 +18,8 @@ app.post('/webhook', (req, res) => {
     return res.status(400).send('Missing challenge parameter');
   }
 
-  // Respond with the challenge value as plain text
-  res.status(200).send(req.body.challenge);
+  // Respond with the challenge value in a JSON format
+  res.status(200).json({ challenge: req.body.challenge });
 });
 
 // Start the server
