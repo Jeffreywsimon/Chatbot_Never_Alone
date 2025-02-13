@@ -1,26 +1,25 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON request body
-app.use(express.json());
+app.use(express.json()); // Middleware to parse JSON requests
 
-// Root route
+// Handle GET requests for webhook validation
 app.get('/', (req, res) => {
-  res.send('Hello from the root route!');
-});
-
-// Webhook route
-app.post('/webhook', (req, res) => {
-  console.log('Webhook received:', req.body);
-
-  if (!req.body.challenge) {
-    return res.status(400).send('Missing challenge parameter');
+  const challenge = req.query.challenge;
+  if (challenge) {
+    console.log(`Responding with challenge: ${challenge}`);
+    res.status(200).send(challenge);  // Respond with the challenge value as plain text
+  } else {
+    res.status(400).send('Missing challenge parameter');
   }
-
-  // Respond with the challenge value in a JSON format
-  res.status(200).json({ challenge: req.body.challenge });
 });
 
-// Start the server
+// Handle POST requests for incoming webhook data
+app.post('/', (req, res) => {
+  console.log('--- Incoming Webhook from Chatbot.com ---');
+  console.log(JSON.stringify(req.body, null, 2));
+  res.status(200).json({ message: 'Webhook received successfully', receivedData: req.body });
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
