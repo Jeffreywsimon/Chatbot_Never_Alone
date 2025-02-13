@@ -14,14 +14,12 @@ app.get('/', (req, res) => {
 app.post('/webhook', (req, res) => {
   console.log('Webhook received:', req.body);
 
-  // Check for 'challenge' parameter in the request body
   if (!req.body.challenge) {
-    console.error('Missing challenge parameter');
     return res.status(400).send('Missing challenge parameter');
   }
 
-  // Respond with the challenge value
-  res.status(200).json({ challenge: req.body.challenge });
+  // Respond with the challenge value as plain text
+  res.status(200).send(req.body.challenge);
 });
 
 // Start the server
