@@ -1,0 +1,14 @@
+# Node modules
+node_modules/
+
+# Visual Studio temporary files
+.vs/
+*.njsproj
+*.sln
+bin/
+obj/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
