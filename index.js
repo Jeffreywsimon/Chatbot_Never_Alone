@@ -1,39 +1,41 @@
+'use strict';
+
 const express = require('express');
-const app = express();
+const bodyParser = require('body-parser');
+const app = express().use(bodyParser.json()); // Creates an HTTP server with JSON parsing
+const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification token
 
-app.use(express.json()); // Middleware to parse JSON requests
-
-// Handle GET requests for webhook validation
+// Webhook verification (GET request)
 app.get('/', (req, res) => {
-  const challenge = req.query.challenge;
-  if (challenge) {
-    console.log(`Responding with challenge: ${challenge}`);
-    res.status(200).send(challenge);  // Respond with the challenge value as plain text
-  } else {
-    res.status(400).send('Missing challenge parameter');
+  // Verify the token
+  if (req.query.token !== token) {
+    return res.sendStatus(401); // Unauthorized
   }
+
+  // Return the challenge to confirm the webhook
+  console.log(`Verification successful. Responding with challenge: ${req.query.challenge}`);
+  return res.end(req.query.challenge); // Plain text response with the challenge value
 });
 
-// Handle POST requests for incoming webhook data
+// Webhook data handling (POST request)
 app.post('/', (req, res) => {
   console.log('--- Incoming Webhook from Chatbot.com ---');
   console.log(JSON.stringify(req.body, null, 2));
 
-  // Prepare a response that includes the original data
+  // Prepare a response (optional)
   const data = {
-    receivedData: req.body,  // Include the full original data
     responses: [
       {
         type: 'randomText',
-        messages: ['Hi', 'Hello']  // Chatbot's expected response format
+        messages: ['Thank you!', 'Received successfully']
       }
     ]
   };
 
-  // Return the modified response with the original data
+  // Return the expected response
   res.status(200).json(data);
 });
 
-
+// Start the server (must be the last line in the file)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`[ChatBot] Webhook is listening on port ${PORT}`));
