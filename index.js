@@ -18,7 +18,9 @@ app.get('/', (req, res) => {
 app.post('/', (req, res) => {
   console.log('--- Incoming Webhook from Chatbot.com ---');
   console.log(JSON.stringify(req.body, null, 2));
-  res.status(200).json({ message: 'Webhook received successfully', receivedData: req.body });
+
+  // Send a 200 status with a success message
+  res.status(200).json({ message: 'Webhook received successfully' });
 });
 
 const PORT = process.env.PORT || 3000;
