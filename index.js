@@ -9,6 +9,9 @@ const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification tok
 const API_KEY = 'your-api-key';
 const API_SECRET = 'your-api-secret';
 const FORM_ID = 'your-form-id'; // Replace with your actual CTM form ID
+require('dotenv').config();
+
+
 
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
