@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "json_chatbot_v2",
   "version": "0.0.0",
   "description": "Json_Chatbot_v2",
@@ -16,4 +17,24 @@
   "scripts": {
     "start": "node index.js"
   }
+=======
+    "name": "json_chatbot_v2",
+    "version": "0.0.0",
+    "description": "Json_Chatbot_v2",
+    "main": "index.js",
+    "author": {
+        "name": ""
+    },
+    "devDependencies": {
+        "eslint": "^8.21.0"
+    },
+    "eslintConfig": {},
+    "dependencies": {
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2"
+    },
+    "scripts": {
+        "start": "node index.js"
+    }
+>>>>>>> 8458de2 (Remove .env from Git tracking)
 }
