@@ -55,7 +55,7 @@ app.post('/', async (req, res) => {
         // Making the POST request to CTM API
         console.log('Sending data to CTM:', JSON.stringify(ctmPayload, null, 2));
         const response = await axios.post(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/${uniqueFormId}`,
+            `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
             ctmPayload,
             {
                 headers: {
