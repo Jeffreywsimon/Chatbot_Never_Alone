@@ -9,6 +9,10 @@ const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification tok
 const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
 
+console.log('API_KEY:', process.env.API_KEY || 'Not Found');
+console.log('API_SECRET:', process.env.API_SECRET || 'Not Found');
+
+
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
     // Verify the token
