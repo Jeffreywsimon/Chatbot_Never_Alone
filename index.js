@@ -3,12 +3,14 @@
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
-
 const app = express().use(bodyParser.json()); // Creates an HTTP server with JSON parsing
 const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification token
 
 const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
+const FORM_ID = process.env.FORM_ID; // Ensure this is set in Heroku env variables
+
+const qs = require('querystring'); // Required for x-www-form-urlencoded format
 
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
@@ -49,37 +51,31 @@ app.post('/', (req, res) => {
             const email = webhookPayload.userAttributes?.default_email || 'Unknown';
             const phoneNumber = webhookPayload.userAttributes?.default_phone_number || '';
 
-            const FORM_ID = webhookPayload.form_id || process.env.FORM_ID;
-
-            // Custom fields mapping
             const customFields = {
-                custom_birthdate: webhookPayload.attributes?.Birthdate || '',
-                custom_insurance_number: webhookPayload.attributes?.InsuranceNumber || '',
-                custom_group_number: webhookPayload.attributes?.GroupNumber || '',
-                custom_additional_notes: webhookPayload.attributes?.AdditionalNotes || ''
+                "custom_birthdate": webhookPayload.attributes?.Birthdate || '',
+                "custom_insurance_number": webhookPayload.attributes?.InsuranceNumber || '',
+                "custom_group_number": webhookPayload.attributes?.GroupNumber || '',
+                "custom_additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
             };
 
-            console.log("Custom Fields being sent:", JSON.stringify(customFields, null, 2));
+            // ✅ Convert to x-www-form-urlencoded format
+            const formData = new URLSearchParams();
+            formData.append("phone_number", phoneNumber);
+            formData.append("caller_name", callerName);
+            formData.append("email", email);
+            formData.append("type", "API");
+            formData.append("unique_form_id", uniqueFormId);
 
-            // Convert payload to URL-encoded format for CTM
-            const qs = new URLSearchParams();
-            qs.append("phone_number", phoneNumber);
-            qs.append("caller_name", callerName);
-            qs.append("email", email);
-            qs.append("type", "API");
-            qs.append("unique_form_id", uniqueFormId);
-
-            // Append custom fields as individual key-value pairs
+            // Append custom fields
             Object.entries(customFields).forEach(([key, value]) => {
-                qs.append(key, value);
+                formData.append(key, value);
             });
 
-            console.log('Final Payload Sent to CTM:', qs.toString());
+            console.log('Sending data to CTM:', Object.fromEntries(formData));
 
-            // Making the POST request to CTM API
             const response = await axios.post(
                 `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
-                qs.toString(),
+                formData,
                 {
                     headers: {
                         'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
@@ -88,11 +84,34 @@ app.post('/', (req, res) => {
                 }
             );
 
-            console.log('CTM API Response:', response.data);
+            console.log('✅ CTM API Response:', response.data);
+
         } catch (error) {
-            console.error('Error processing CTM API request:', error.response?.data || error.message);
+            console.error('❌ Error processing CTM API request:', error.response?.data || error.message);
         }
     }, 0); // Run immediately after response
+
+});
+
+// ✅ Fetch Available Fields from CTM (Debugging)
+app.get('/debug-ctm-fields', async (req, res) => {
+    try {
+        const response = await axios.get(
+            `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
+            {
+                headers: {
+                    'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
+                    'Accept': 'application/json'
+                }
+            }
+        );
+
+        console.log('CTM Form Reactor Details:', response.data);
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error('Error fetching form details:', error.response?.data || error.message);
+        res.status(500).json({ error: error.response?.data || error.message });
+    }
 });
 
 // Start the server (must be the last line in the file)
