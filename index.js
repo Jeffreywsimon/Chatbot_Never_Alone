@@ -93,3 +93,5 @@ app.post('/', async (req, res) => {
 // Start the server (must be the last line in the file)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`[ChatBot] Webhook is listening on port ${PORT}`));
+
+console.log('Authorization Header:', headers.Authorization);
