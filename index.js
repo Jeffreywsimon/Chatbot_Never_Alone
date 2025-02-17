@@ -6,11 +6,6 @@ const bodyParser = require('body-parser');
 const app = express().use(bodyParser.json()); // Creates an HTTP server with JSON parsing
 const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification token
 
-const API_KEY = process.env.API_KEY;
-const API_SECRET = process.env.API_SECRET;
-
-console.log('API_KEY:', process.env.API_KEY || 'Not Found');
-console.log('API_SECRET:', process.env.API_SECRET || 'Not Found');
 
 
 // Webhook verification (GET request)
