@@ -1,17 +1,10 @@
-
+﻿'use strict';
 
 const express = require('express');
-const bodyParser = require('body-parser');
 const axios = require('axios');
+const bodyParser = require('body-parser');
 const app = express().use(bodyParser.json()); // Creates an HTTP server with JSON parsing
-
 const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification token
-const API_KEY = 'your-api-key';
-const API_SECRET = 'your-api-secret';
-const FORM_ID = 'your-form-id'; // Replace with your actual CTM form ID
-require('dotenv').config();
-
-
 
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
@@ -26,72 +19,73 @@ app.get('/', (req, res) => {
 });
 
 // Webhook data handling (POST request)
-app.post('/', async (req, res) => {
+app.post('/', (req, res) => {
     console.log('--- Incoming Webhook from Chatbot.com ---');
     console.log(JSON.stringify(req.body, null, 2));
 
-    const webhookPayload = req.body;
-
-    try {
-        // Extract fields from the webhook payload
-        const uniqueFormId = webhookPayload.userId;
-        const callerName = webhookPayload.userAttributes.default_name;
-        const email = webhookPayload.userAttributes.default_email;
-        const phoneNumber = webhookPayload.userAttributes.default_phone_number;
-
-        // Custom fields mapping
-        const customFields = {
-            custom_birthdate: webhookPayload.attributes.Birthdate || '',
-            custom_insurance_number: webhookPayload.attributes.InsuranceNumber || '',
-            custom_group_number: webhookPayload.attributes.GroupNumber || '',
-            custom_additional_notes: webhookPayload.attributes.AdditionalNotes || ''
-        };
-
-        // Forming the payload for the CTM API
-        const ctmPayload = {
-            phone_number: phoneNumber,
-            caller_name: callerName,
-            email: email,
-            type: 'API',
-            unique_form_id: uniqueFormId,
-            custom_fields: customFields
-        };
-
-        // Making the POST request to CTM API
-        const response = await axios.post(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
-            ctmPayload,
+    // Prepare a response (optional)
+    const data = {
+        responses: [
             {
-                headers: {
-                    'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
-                    'Content-Type': 'application/json'
-                }
+                type: 'randomText',
+                messages: ['Thank you!', 'Received successfully']
             }
-        );
+        ]
+    };
 
-        console.log('CTM API Response:', response.data);
+    // Return the expected response
+    res.status(200).json(data);
 
-        // Prepare a response for Chatbot.com (optional)
-        const data = {
-            responses: [
+    // ✅ Process CTM request in the background
+    setTimeout(async () => {
+        try {
+            const webhookPayload = req.body;
+            const uniqueFormId = webhookPayload.userId;
+            const callerName = webhookPayload.userAttributes?.default_name || 'Unknown';
+            const email = webhookPayload.userAttributes?.default_email || 'Unknown';
+            const phoneNumber = webhookPayload.userAttributes?.default_phone_number || '';
+
+            const FORM_ID = webhookPayload.form_id || process.env.FORM_ID;
+
+            const customFields = {
+                custom_birthdate: webhookPayload.attributes?.Birthdate || '',
+                custom_insurance_number: webhookPayload.attributes?.InsuranceNumber || '',
+                custom_group_number: webhookPayload.attributes?.GroupNumber || '',
+                custom_additional_notes: webhookPayload.attributes?.AdditionalNotes || ''
+            };
+
+            const ctmPayload = {
+                phone_number: phoneNumber,
+                caller_name: callerName,
+                email: email,
+                type: 'API',
+                unique_form_id: uniqueFormId,
+                custom_fields: customFields
+            };
+
+            console.log('Sending data to CTM:', ctmPayload);
+
+            const response = await axios.post(
+                `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
+                ctmPayload,
                 {
-                    type: 'randomText',
-                    messages: ['Thank you!', 'Data received and processed successfully!']
+                    headers: {
+                        'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
                 }
-            ]
-        };
+            );
 
-        // Return the expected response to Chatbot.com
-        res.status(200).json(data);
+            console.log('CTM API Response:', response.data);
+        } catch (error) {
+            console.error('Error processing CTM API request:', error.response?.data || error.message);
+        }
+    }, 0); // Run immediately after response
 
-    } catch (error) {
-        console.error('Error processing webhook:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+}); // ❌ THIS IS THE ERROR LINE - EXTRA CLOSING BRACE
+
+
 
 // Start the server (must be the last line in the file)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`[ChatBot] Webhook is listening on port ${PORT}`));
-
-console.log('Authorization Header:', headers.Authorization);
