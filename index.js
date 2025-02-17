@@ -1,17 +1,14 @@
-﻿'use strict';
+'use strict';
 
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
+
 const app = express().use(bodyParser.json()); // Creates an HTTP server with JSON parsing
 const token = 'VERIFICATION_TOKEN'; // Replace with your actual verification token
 
 const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
-
-console.log('API_KEY:', process.env.API_KEY || 'Not Found');
-console.log('API_SECRET:', process.env.API_SECRET || 'Not Found');
-
 
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
@@ -54,6 +51,7 @@ app.post('/', (req, res) => {
 
             const FORM_ID = webhookPayload.form_id || process.env.FORM_ID;
 
+            // Custom fields mapping
             const customFields = {
                 custom_birthdate: webhookPayload.attributes?.Birthdate || '',
                 custom_insurance_number: webhookPayload.attributes?.InsuranceNumber || '',
@@ -61,20 +59,27 @@ app.post('/', (req, res) => {
                 custom_additional_notes: webhookPayload.attributes?.AdditionalNotes || ''
             };
 
-            const ctmPayload = {
-                phone_number: phoneNumber,
-                caller_name: callerName,
-                email: email,
-                type: 'API',
-                unique_form_id: uniqueFormId,
-                custom_fields: customFields
-            };
+            console.log("Custom Fields being sent:", JSON.stringify(customFields, null, 2));
 
-            console.log('Sending data to CTM:', ctmPayload);
+            // Convert payload to URL-encoded format for CTM
+            const qs = new URLSearchParams();
+            qs.append("phone_number", phoneNumber);
+            qs.append("caller_name", callerName);
+            qs.append("email", email);
+            qs.append("type", "API");
+            qs.append("unique_form_id", uniqueFormId);
 
+            // Append custom fields as individual key-value pairs
+            Object.entries(customFields).forEach(([key, value]) => {
+                qs.append(key, value);
+            });
+
+            console.log('Final Payload Sent to CTM:', qs.toString());
+
+            // Making the POST request to CTM API
             const response = await axios.post(
                 `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
-                ctmPayload,
+                qs.toString(),
                 {
                     headers: {
                         'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
@@ -88,10 +93,7 @@ app.post('/', (req, res) => {
             console.error('Error processing CTM API request:', error.response?.data || error.message);
         }
     }, 0); // Run immediately after response
-
-}); // ❌ THIS IS THE ERROR LINE - EXTRA CLOSING BRACE
-
-
+});
 
 // Start the server (must be the last line in the file)
 const PORT = process.env.PORT || 3000;
