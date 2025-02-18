@@ -58,7 +58,7 @@ app.post('/', (req, res) => {
                 "date_of_birth": webhookPayload.attributes?.Birthdate || '',
                 "policy__id_number": webhookPayload.attributes?.InsuranceNumber || '',
                 "group_number": webhookPayload.attributes?.GroupNumber || '',
-                "additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
+                "additional_information": webhookPayload.attributes?.AdditionalNotes || ''
             }
         };
 
