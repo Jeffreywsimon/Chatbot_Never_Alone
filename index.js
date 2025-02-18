@@ -92,18 +92,47 @@ app.post('/', (req, res) => {
 });
 
 // ✅ Debug Route: Logs the API Request Instead of Sending It
-app.post('/test-ctm', async (req, res) => {
-    console.log('--- TESTING CTM API REQUEST ---');
-    console.log('Request Data (What would be sent to CTM):', JSON.stringify(req.body, null, 2));
+app.post('/test-ctm', (req, res) => {
+    try {
+        const webhookPayload = req.body;
+        const uniqueFormId = webhookPayload.userId;
+        const callerName = webhookPayload.userAttributes?.default_name || 'Unknown';
+        const email = webhookPayload.userAttributes?.default_email || 'Unknown';
+        const phoneNumber = webhookPayload.userAttributes?.default_phone_number || '';
 
-    // Simulated CTM API response (to avoid real posting)
-    const fakeResponse = {
-        success: true,
-        message: "This is a simulated response. No data was actually sent to CTM."
-    };
+        const customFields = {
+            "custom_birthdate": webhookPayload.attributes?.Birthdate || '',
+            "custom_insurance_number": webhookPayload.attributes?.InsuranceNumber || '',
+            "custom_group_number": webhookPayload.attributes?.GroupNumber || '',
+            "custom_additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
+        };
 
-    return res.status(200).json(fakeResponse);
+        // ✅ Convert to x-www-form-urlencoded format
+        const formData = new URLSearchParams();
+        formData.append("phone_number", phoneNumber);
+        formData.append("caller_name", callerName);
+        formData.append("email", email);
+        formData.append("unique_form_id", uniqueFormId);
+
+        // Append custom fields
+        Object.entries(customFields).forEach(([key, value]) => {
+            formData.append(key, value);
+        });
+
+        console.log('🚀 Simulated Data for CTM:', Object.fromEntries(formData));
+
+        res.status(200).json({
+            success: true,
+            message: "This is a simulated response. No data was actually sent to CTM.",
+            sentData: Object.fromEntries(formData)
+        });
+
+    } catch (error) {
+        console.error('❌ Error in test-ctm route:', error.message);
+        res.status(500).json({ error: error.message });
+    }
 });
+
 
 // ✅ Fetch Available Fields from CTM (Debugging)
 app.get('/debug-ctm-fields', async (req, res) => {
