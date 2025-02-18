@@ -47,10 +47,10 @@ app.post('/', (req, res) => {
 
             // ✅ Ensure field names match CTM and avoid missing required fields
             const customFields = {
-                "date_of_birth": webhookPayload.attributes?.Birthdate || 'N/A', // Ensure not empty
-                "policy__id_number": webhookPayload.attributes?.InsuranceNumber || 'N/A', 
+                "date_of_birth": webhookPayload.attributes?.Patient_Birthday || 'N/A', // Ensure not empty
+                "policy__id_number": webhookPayload.attributes?.Insurance_ID || 'N/A', 
                 "group_number": webhookPayload.attributes?.GroupNumber || 'N/A', 
-                "additional_information": webhookPayload.attributes?.AdditionalNotes || 'N/A',
+                "additional_information": webhookPayload.attributes?.Comments || 'N/A',
                 "insurance_company": webhookPayload.attributes?.Insurance_Company || 'N/A', // Ensure not empty
             };
 
