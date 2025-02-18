@@ -89,7 +89,20 @@ app.post('/', (req, res) => {
             console.error('❌ Error processing CTM API request:', error.response?.data || error.message);
         }
     }, 0); // Run immediately after response
+});
 
+// ✅ Debug Route: Logs the API Request Instead of Sending It
+app.post('/test-ctm', async (req, res) => {
+    console.log('--- TESTING CTM API REQUEST ---');
+    console.log('Request Data (What would be sent to CTM):', JSON.stringify(req.body, null, 2));
+
+    // Simulated CTM API response (to avoid real posting)
+    const fakeResponse = {
+        success: true,
+        message: "This is a simulated response. No data was actually sent to CTM."
+    };
+
+    return res.status(200).json(fakeResponse);
 });
 
 // ✅ Fetch Available Fields from CTM (Debugging)
