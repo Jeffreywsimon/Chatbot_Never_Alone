@@ -43,7 +43,8 @@ app.post('/', (req, res) => {
             const uniqueFormId = webhookPayload.userId || 'unknown_form_id';
             const callerName = webhookPayload.attributes?.Patient_Name || 'Unknown';
             const email = webhookPayload.userAttributes?.default_email || 'Unknown';
-            const phoneNumber = webhookPayload.attributes?.Phone || '';
+            const phoneNumber = webhookPayload.attributes?.Phone ? `1${webhookPayload.attributes.Phone}` : '';
+
 
             // ✅ Ensure field names match CTM and avoid missing required fields
             const customFields = {
