@@ -51,6 +51,7 @@ app.post('/', (req, res) => {
                 "policy__id_number": webhookPayload.attributes?.InsuranceNumber || 'N/A', 
                 "group_number": webhookPayload.attributes?.GroupNumber || 'N/A', 
                 "additional_information": webhookPayload.attributes?.AdditionalNotes || 'N/A'
+                "insurance_company": webhookPayload.attributes?.Insurance_Company || 'N/A', // Ensure not empty
             };
 
             // ✅ Convert to x-www-form-urlencoded format
