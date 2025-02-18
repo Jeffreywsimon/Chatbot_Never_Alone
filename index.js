@@ -55,8 +55,8 @@ app.post('/', (req, res) => {
 
         const customFields = {
             "custom_fields": {
-                "patient_dob": webhookPayload.attributes?.Birthdate || '',
-                "insurance_policy": webhookPayload.attributes?.InsuranceNumber || '',
+                "date_of_birth": webhookPayload.attributes?.Birthdate || '',
+                "policy__id_number": webhookPayload.attributes?.InsuranceNumber || '',
                 "group_number": webhookPayload.attributes?.GroupNumber || '',
                 "additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
             }
