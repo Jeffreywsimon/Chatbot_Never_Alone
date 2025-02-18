@@ -63,7 +63,6 @@ app.post('/', (req, res) => {
             formData.append("phone_number", phoneNumber);
             formData.append("caller_name", callerName);
             formData.append("email", email);
-            formData.append("type", "API");
             formData.append("unique_form_id", uniqueFormId);
 
             // Append custom fields
