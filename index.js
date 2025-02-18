@@ -55,10 +55,10 @@ app.post('/', (req, res) => {
 
         const customFields = {
             "custom_fields": {
-                "custom_birthdate": webhookPayload.attributes?.Birthdate || '',
-                "custom_insurance_number": webhookPayload.attributes?.InsuranceNumber || '',
-                "custom_group_number": webhookPayload.attributes?.GroupNumber || '',
-                "custom_additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
+                "patient_dob": webhookPayload.attributes?.Birthdate || '',
+                "insurance_policy": webhookPayload.attributes?.InsuranceNumber || '',
+                "group_number": webhookPayload.attributes?.GroupNumber || '',
+                "additional_notes": webhookPayload.attributes?.AdditionalNotes || ''
             }
         };
 
@@ -73,7 +73,7 @@ app.post('/', (req, res) => {
         console.log('Sending data to CTM:', Object.fromEntries(formData));
 
         const response = await axios.post(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B92824F8B152BD388A6CA77D85B49E3B606A`,
+            `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B9284C088CEE14C9508CC5042B2031EDFA12`,
             formData,
             {
                 headers: {
