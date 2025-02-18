@@ -100,7 +100,7 @@ app.get('/debug-ctm-fields', async (req, res) => {
             {
                 headers: {
                     'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
-                    'Accept': 'application/json'
+                    'Accept': 'application/x-www-form-urlencoded'
                 }
             }
         );
