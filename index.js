@@ -1,5 +1,3 @@
-
-
 'use strict';
 
 const express = require('express');
@@ -12,16 +10,11 @@ const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
 const FORM_ID = process.env.FORM_ID; // Ensure this is set in Heroku env variables
 
-const qs = require('querystring'); // Required for x-www-form-urlencoded format
-
 // Webhook verification (GET request)
 app.get('/', (req, res) => {
-    // Verify the token
     if (req.query.token !== token) {
         return res.sendStatus(401); // Unauthorized
     }
-
-    // Return the challenge to confirm the webhook
     console.log(`Verification successful. Responding with challenge: ${req.query.challenge}`);
     return res.end(req.query.challenge); // Plain text response with the challenge value
 });
@@ -31,7 +24,7 @@ app.post('/', (req, res) => {
     console.log('--- Incoming Webhook from Chatbot.com ---');
     console.log(JSON.stringify(req.body, null, 2));
 
-    // Prepare a response (optional)
+    // Prepare a response
     const data = {
         responses: [
             {
@@ -41,64 +34,63 @@ app.post('/', (req, res) => {
         ]
     };
 
-    // Return the expected response
     res.status(200).json(data);
 
     // ✅ Process CTM request in the background
     setTimeout(async () => {
-    try {
-        const webhookPayload = req.body;
-        const uniqueFormId = webhookPayload.userId;
-        const callerName = webhookPayload.userAttributes?.default_name || 'Unknown';
-        const email = webhookPayload.userAttributes?.default_email || 'Unknown';
-        const phoneNumber = webhookPayload.userAttributes?.default_phone_number || '';
+        try {
+            const webhookPayload = req.body;
+            const uniqueFormId = webhookPayload.userId || 'unknown_form_id';
+            const callerName = webhookPayload.userAttributes?.default_name || 'Unknown';
+            const email = webhookPayload.userAttributes?.default_email || 'Unknown';
+            const phoneNumber = webhookPayload.userAttributes?.default_phone_number || '';
 
-        const customFields = {
-            "custom_fields": {
-                "date_of_birth": webhookPayload.attributes?.Birthdate || '',
-                "policy__id_number": webhookPayload.attributes?.InsuranceNumber || '',
-                "group_number": webhookPayload.attributes?.GroupNumber || '',
-                "additional_information": webhookPayload.attributes?.AdditionalNotes || ''
-            }
-        };
+            // ✅ Ensure field names match CTM and avoid missing required fields
+            const customFields = {
+                "date_of_birth": webhookPayload.attributes?.Birthdate || 'N/A', // Ensure not empty
+                "policy_id_number": webhookPayload.attributes?.InsuranceNumber || 'N/A', 
+                "group_number": webhookPayload.attributes?.GroupNumber || 'N/A', 
+                "additional_information": webhookPayload.attributes?.AdditionalNotes || 'N/A'
+            };
 
-        // ✅ Convert to x-www-form-urlencoded format
-        const formData = new URLSearchParams();
-        formData.append("phone_number", phoneNumber);
-        formData.append("caller_name", callerName);
-        formData.append("email", email);
-        formData.append("unique_form_id", uniqueFormId);
-       Object.entries(customFields).forEach(([key, value]) => {
-        formData.append(`custom_fields[${key}]`, value);
-        });
+            // ✅ Convert to x-www-form-urlencoded format
+            const formData = new URLSearchParams();
+            formData.append("phone_number", phoneNumber);
+            formData.append("caller_name", callerName);
+            formData.append("email", email);
+            formData.append("unique_form_id", uniqueFormId);
 
-        console.log('Sending data to CTM:', Object.fromEntries(formData));
+            // ✅ Fix: Append custom fields correctly
+            Object.entries(customFields).forEach(([key, value]) => {
+                formData.append(`custom_fields[${key}]`, value);
+            });
 
-        const response = await axios.post(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B9284C088CEE14C9508CC5042B2031EDFA12`,
-            formData,
-            {
-                headers: {
-                    'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
-                    'Content-Type': 'application/x-www-form-urlencoded'
+            console.log('📡 Sending data to CTM:', Object.fromEntries(formData));
+
+            const response = await axios.post(
+                `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B9284C088CEE14C9508CC5042B2031EDFA12`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
                 }
-            }
-        );
+            );
 
-        console.log('✅ CTM API Response:', response.data);
+            console.log('✅ CTM API Response:', response.data);
 
-    } catch (error) {
-        console.error('❌ Error processing CTM API request:', error.response?.data || error.message);
-    }
-}, 0); // Run immediately after response
-
+        } catch (error) {
+            console.error('❌ Error processing CTM API request:', error.response?.data || error.message);
+        }
+    }, 0);
 });
 
 // ✅ Fetch Available Fields from CTM (Debugging)
 app.get('/debug-ctm-fields', async (req, res) => {
     try {
         const response = await axios.get(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
+            `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B9284C088CEE14C9508CC5042B2031EDFA12`,
             {
                 headers: {
                     'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
@@ -115,6 +107,6 @@ app.get('/debug-ctm-fields', async (req, res) => {
     }
 });
 
-// Start the server (must be the last line in the file)
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`[ChatBot] Webhook is listening on port ${PORT}`));
