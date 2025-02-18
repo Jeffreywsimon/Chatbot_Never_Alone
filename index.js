@@ -97,7 +97,7 @@ app.post('/', (req, res) => {
 app.get('/debug-ctm-fields', async (req, res) => {
     try {
         const response = await axios.get(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/${FORM_ID}`,
+            `https://api.calltrackingmetrics.com/api/v1/formreactor/ChatbotForm`,
             {
                 headers: {
                     'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
