@@ -39,33 +39,39 @@ app.post('/', (req, res) => {
     // ✅ Process CTM request in the background
     setTimeout(async () => {
         try {
-            const webhookPayload = req.body;
-            const uniqueFormId = webhookPayload.userId || 'unknown_form_id';
-            const callerName = webhookPayload.attributes?.Patient_Name || 'Unknown';
-            const email = webhookPayload.userAttributes?.default_email || 'Unknown';
-            const phoneNumber = webhookPayload.attributes?.Phone ? `1${webhookPayload.attributes.Phone}` : '';
-           // const phoneNumber = webhookPayload.attributes?.Phone || '';
-
-            // ✅ Ensure field names match CTM and avoid missing required fields
-            const customFields = {
-                "date_of_birth": webhookPayload.attributes?.Patient_Birthday || 'N/A', // Ensure not empty
+                const webhookPayload = req.body;
+                const uniqueFormId = webhookPayload.userId || 'unknown_form_id';
+                const callerName = webhookPayload.attributes?.Patient_Name || 'Unknown';
+                const email = webhookPayload.userAttributes?.default_email || 'Unknown';
+                
+                // ✅ Add '1' before the phone number if it exists
+                const phoneNumber = webhookPayload.attributes?.Phone ? `1${webhookPayload.attributes.Phone}` : '';
+                
+                // ✅ Handle "skip" case for additional_information (Comments)
+                const comments = webhookPayload.attributes?.Comments;
+                const formattedComments = (comments && comments.toLowerCase() === "skip") ? '' : comments || 'N/A';
+                
+                // ✅ Ensure field names match CTM and avoid missing required fields
+                const customFields = {
+                "date_of_birth": webhookPayload.attributes?.Patient_Birthday || 'N/A', 
                 "policy__id_number": webhookPayload.attributes?.Insurance_ID || 'N/A', 
                 "group_number": webhookPayload.attributes?.GroupNumber || 'N/A', 
-                "additional_information": webhookPayload.attributes?.Comments || 'N/A',
-                "insurance_company": webhookPayload.attributes?.Insurance_Company || 'N/A', // Ensure not empty
-            };
-
-            // ✅ Convert to x-www-form-urlencoded format
-            const formData = new URLSearchParams();
-            formData.append("phone_number", phoneNumber);
-            formData.append("caller_name", callerName);
-            formData.append("email", email);
-            formData.append("unique_form_id", uniqueFormId);
-
-            // ✅ Fix: Append custom fields correctly
-            Object.entries(customFields).forEach(([key, value]) => {
+                "additional_information": formattedComments, // Handles "skip" case
+                "insurance_company": webhookPayload.attributes?.Insurance_Company || 'N/A',
+                };
+                
+                // ✅ Convert to x-www-form-urlencoded format
+                const formData = new URLSearchParams();
+                formData.append("phone_number", phoneNumber);
+                formData.append("caller_name", callerName);
+                formData.append("email", email);
+                formData.append("unique_form_id", uniqueFormId);
+                
+                // ✅ Append custom fields correctly
+                Object.entries(customFields).forEach(([key, value]) => {
                 formData.append(`custom_fields[${key}]`, value);
-            });
+                });
+
 
             console.log('📡 Sending data to CTM:', Object.fromEntries(formData));
 
