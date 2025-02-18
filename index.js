@@ -68,7 +68,9 @@ app.post('/', (req, res) => {
         formData.append("caller_name", callerName);
         formData.append("email", email);
         formData.append("unique_form_id", uniqueFormId);
-        formData.append("custom_fields", JSON.stringify(customFields.custom_fields)); // ✅ Fix: Nesting custom fields
+       Object.entries(customFields).forEach(([key, value]) => {
+        formData.append(`custom_fields[${key}]`, value);
+        });
 
         console.log('Sending data to CTM:', Object.fromEntries(formData));
 
