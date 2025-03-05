@@ -94,26 +94,6 @@ app.post('/', (req, res) => {
     }, 0);
 });
 
-// ✅ Fetch Available Fields from CTM (Debugging)
-app.get('/debug-ctm-fields', async (req, res) => {
-    try {
-        const response = await axios.get(
-            `https://api.calltrackingmetrics.com/api/v1/formreactor/FRT472ABB2C5B9B141A72DE8F1EAEC5B9284C088CEE14C9508CC5042B2031EDFA12`,
-            {
-                headers: {
-                    'Authorization': `Basic ${Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64')}`,
-                    'Accept': 'application/json'
-                }
-            }
-        );
-
-        console.log('CTM Form Reactor Details:', response.data);
-        res.status(200).json(response.data);
-    } catch (error) {
-        console.error('Error fetching form details:', error.response?.data || error.message);
-        res.status(500).json({ error: error.response?.data || error.message });
-    }
-});
 
 // Start the server
 const PORT = process.env.PORT || 3000;
