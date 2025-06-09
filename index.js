@@ -11,7 +11,7 @@ const app = express();
 
 // ✅ Enable CORS: Restrict API Access
 app.use(cors({
-    origin: "https://havendetoxnow.com", // ✅ Only allow this origin
+    origin: "https://neveralonerehab.com/", // ✅ Only allow this origin
     methods: "POST,OPTIONS",
     allowedHeaders: "Content-Type, Authorization",
 }));
