@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 // ✅ Rate Limiting: Prevent API Abuse (100 requests per 10 min per IP)
 const limiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100, // Max requests per IP per window
+    max: 100,
     message: "⚠️ Too many requests. Please try again later.",
 });
 app.use(limiter);
@@ -32,14 +32,23 @@ app.use(morgan('combined'));
 // ✅ Temporary storage for visitor SIDs (linked by CTM_Session_ID)
 const visitorSessions = new Map();
 
-const token = 'VERIFICATION_TOKEN'; // Replace with actual token
+const token = 'VERIFICATION_TOKEN';
 const API_KEY = process.env.API_KEY;
 const API_SECRET = process.env.API_SECRET;
+
+// ✅ Phone normalization helper
+function toE164(number) {
+    const digits = number.trim().replace(/\D/g, '');
+    if (!digits || digits.length < 10 || digits.length > 11) return null;
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+    return null;
+}
 
 // ✅ Webhook verification (GET request)
 app.get('/', (req, res) => {
     if (req.query.token !== token) {
-        return res.sendStatus(401); // Unauthorized
+        return res.sendStatus(401);
     }
     console.log(`🔹 GET Request: Verification successful. Responding with challenge: ${req.query.challenge}`);
     return res.end(req.query.challenge);
@@ -56,7 +65,6 @@ app.post('/pre-sync-visitor', (req, res) => {
         return res.status(400).json({ error: "Missing visitor_sid" });
     }
 
-    // ✅ Store visitor_sid
     visitorSessions.set("CTM_Session_ID", visitor_sid);
     console.log(`✅ Stored Visitor SID: ${visitor_sid} as CTM_Session_ID`);
 
@@ -68,31 +76,59 @@ app.post('/', async (req, res) => {
     console.log('--- Incoming Webhook from Chatbot.com ---');
     console.log(JSON.stringify(req.body, null, 2));
 
-    // ✅ Retrieve the CTM_Session_ID from storage
+    const webhookPayload = req.body;
     const visitor_sid = visitorSessions.get("CTM_Session_ID") || "unknown_sid";
 
     console.log(`📌 Processing Chatbot Data:`);
     console.log(`   - Retrieved Visitor SID (CTM_Session_ID): ${visitor_sid}`);
 
-    // ✅ Retrieve the "isComplete" field from chatbot attributes
-    let isComplete = req.body.attributes?.isComplete;
+    const rawPhone = webhookPayload.attributes?.Phone || '';
+    const phoneNumber = toE164(rawPhone);
+
+    // ✅ Reject invalid phone number with Chatbot re-prompt
+    if (!phoneNumber) {
+        console.warn(`🚫 Invalid phone format: Raw = '${rawPhone}', Digits = '${rawPhone.replace(/\D/g, '')}'`);
+        return res.status(200).json({
+            attributes: {
+                is_phone_valid: "no"
+            },
+            messages: [
+                {
+                    text: "❗ The phone number you entered appears to be invalid. Please enter a valid 10-digit US number like 555-555-5555."
+                }
+            ]
+        });
+    }
+
+    // ✅ Respond early if this is only a phone validation webhook
+    if (!webhookPayload.attributes?.isComplete) {
+        console.log("🔁 Early phone validation webhook. Skipping CTM/DB logic.");
+        return res.status(200).json({
+            attributes: {
+                visitor_sid: visitor_sid,
+                CTM_Session_ID: visitor_sid,
+                is_phone_valid: "yes"
+            }
+        });
+    }
+
+    let isComplete = webhookPayload.attributes?.isComplete;
 
     if (typeof isComplete === 'undefined' || isComplete === null) {
         console.warn("⚠️ 'isComplete' field is missing or undefined.");
-        isComplete = "no"; // Default to "no" if the field is missing
+        isComplete = "no";
     }
 
     console.log(`📋 Form Completion Status (isComplete): ${isComplete}`);
 
-    // ✅ Respond to Chatbot.com Webhook with visitor_sid
     res.status(200).json({
         attributes: {
             visitor_sid: visitor_sid,
-            CTM_Session_ID: visitor_sid
+            CTM_Session_ID: visitor_sid,
+            is_phone_valid: "yes"
         }
     });
 
-    // ✅ Check isComplete status before sending data to CTM
     if (isComplete.toLowerCase().trim() !== "yes") {
         console.warn("⏳ Skipping CTM Submission: Form is incomplete.");
         return;
@@ -100,14 +136,11 @@ app.post('/', async (req, res) => {
 
     console.log("✅ Form is complete. Proceeding with CTM submission.");
 
-    // ✅ Send Data to CTM
     setTimeout(async () => {
         try {
-            const webhookPayload = req.body;
             const uniqueFormId = webhookPayload.userId || 'unknown_form_id';
             const callerName = webhookPayload.attributes?.Patient_Name || 'Unknown';
             const email = webhookPayload.userAttributes?.default_email || 'Unknown';
-            const phoneNumber = webhookPayload.attributes?.Phone ? `1${webhookPayload.attributes.Phone}` : '';
 
             const comments = webhookPayload.attributes?.Comments;
             const formattedComments = (comments && comments.toLowerCase() === "skip") ? '' : comments || 'N/A';
